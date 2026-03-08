@@ -1,0 +1,93 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="page-container">
+  <div class="options-wrap fade-up">
+    <div class="options-card">
+      <div class="breadcrumb" style="justify-content:center;margin-bottom:1.5rem">
+        <a href="/">Home</a>
+        <span class="breadcrumb-sep">›</span>
+        <span>{{ __("Package Options") }}</span>
+      </div>
+
+      <h1>{{ __("Customise Your Package") }}</h1>
+      <p>{{ __("Fill in the required fields below before adding this item to your basket.") }}</p>
+
+      <form method="post" class="options-form">
+        {% for option in package.options %}
+          <div class="form-group">
+            <label class="form-label" for="option_{{ option.id }}">
+              {{ option.name }}
+              {% if option.required %}<span class="required-mark">*</span>{% endif %}
+            </label>
+
+            {% if option.type == 'text' %}
+              <input
+                type="text"
+                id="option_{{ option.id }}"
+                name="option_{{ option.id }}"
+                class="form-control"
+                placeholder="{{ option.placeholder }}"
+                {% if option.required %}required{% endif %}
+              >
+            {% elseif option.type == 'dropdown' %}
+              <select id="option_{{ option.id }}" name="option_{{ option.id }}" class="form-control" {% if option.required %}required{% endif %}>
+                <option value="">— Select an option —</option>
+                {% for val in option.values %}
+                  <option value="{{ val.value }}">{{ val.label }}</option>
+                {% endfor %}
+              </select>
+            {% elseif option.type == 'checkbox' %}
+              <div class="checkbox-wrap">
+                <input type="checkbox" id="option_{{ option.id }}" name="option_{{ option.id }}" value="1" class="checkbox-input">
+                <label for="option_{{ option.id }}" class="checkbox-label">{{ option.placeholder }}</label>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+
+        <div class="options-actions">
+          <a href="javascript:history.back()" class="btn btn-tertiary">← Back</a>
+          <button type="submit" class="btn btn-primary">Add to Basket →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+.options-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0 4rem;
+}
+.options-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 520px;
+  text-align: center;
+}
+.options-card h1 {
+  font-size: 1.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+}
+.options-card p { color: var(--text2); font-size: 0.9rem; margin-bottom: 2rem; }
+.options-form { text-align: left; }
+.required-mark { color: var(--accent2); margin-left: 3px; }
+.checkbox-wrap { display: flex; align-items: center; gap: 0.75rem; }
+.checkbox-input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+.checkbox-label { font-size: 0.9rem; cursor: pointer; }
+.options-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  justify-content: flex-end;
+}
+</style>
+
+{% endblock %}

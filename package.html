@@ -1,0 +1,287 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="page-container">
+
+  {# ── BREADCRUMB ── #}
+  <div class="breadcrumb fade-up">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="/category/{{ package.category.id }}">{{ package.category.name }}</a>
+    <span class="breadcrumb-sep">›</span>
+    <span>{{ package.name }}</span>
+  </div>
+
+  {# ── PACKAGE DETAIL ── #}
+  <div class="pkg-detail fade-up">
+    {# Left: image #}
+    <div class="pkg-detail-media">
+      {% if package.image.url %}
+        <div class="pkg-detail-img">
+          <img src="{{ package.image.url }}" alt="{{ package.name }}">
+        </div>
+      {% else %}
+        <div class="pkg-detail-img pkg-detail-img-placeholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="2" y="2" width="20" height="20" rx="4"/><path d="M8 12h8M12 8v8"/></svg>
+        </div>
+      {% endif %}
+
+      {# Media gallery if present #}
+      {% if package.media|length > 0 %}
+        <div class="pkg-media-gallery">
+          {% for media in package.media %}
+            <div class="pkg-media-thumb">
+              <img src="{{ media.url }}" alt="{{ package.name }} - media {{ loop.index }}">
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    {# Right: info #}
+    <div class="pkg-detail-info">
+      <div class="pkg-detail-cat">{{ package.category.name }}</div>
+      <h1 class="pkg-detail-name">{{ package.name }}</h1>
+
+      {# Price block #}
+      <div class="pkg-detail-price-block">
+        {% if package.price == 0 %}
+          <div class="pkg-detail-price free">FREE</div>
+        {% elseif package.customPrice %}
+          <div class="pkg-detail-price">{{ __("You decide how much to pay.") }}</div>
+        {% else %}
+          {% if package.discount.applied %}
+            <div class="pkg-detail-original">{{ package.discount.original|money }} {{ basket.currency }}</div>
+          {% endif %}
+          <div class="pkg-detail-price {% if package.discount.applied %}discounted{% endif %}">
+            {{ package.price|money }} {{ basket.currency }}
+          </div>
+          {% if package.discount.applied %}
+            <span class="pkg-detail-discount-tag">Save {{ package.discount.percentage }}%</span>
+          {% endif %}
+        {% endif %}
+
+        {% if package.type == 'subscription' %}
+          <div class="pkg-detail-sub-note">Recurring subscription</div>
+        {% endif %}
+      </div>
+
+      {# Package countdown #}
+      {% if package.countdownEnds %}
+        <div class="pkg-countdown">
+          <span class="pkg-countdown-label">Limited time!</span>
+          <span class="countdown" data-countdown="{{ package.countdownEnds }}">Ending soon</span>
+        </div>
+      {% endif %}
+
+      {# Description #}
+      <div class="pkg-detail-desc">
+        {{ package.description|raw }}
+      </div>
+
+      {# Options form (if required) #}
+      {% if package.requiresOptions %}
+        <form method="post" action="/checkout/packages/add/{{ package.identifier ?? package.id }}" class="pkg-options-form">
+          {% for option in package.options %}
+            <div class="form-group">
+              <label class="form-label" for="option_{{ option.id }}">{{ option.name }}</label>
+              {% if option.type == 'text' %}
+                <input type="text" class="form-control" id="option_{{ option.id }}" name="option_{{ option.id }}" placeholder="{{ option.placeholder }}" required>
+              {% elseif option.type == 'dropdown' %}
+                <select class="form-control" id="option_{{ option.id }}" name="option_{{ option.id }}" required>
+                  {% for val in option.values %}
+                    <option value="{{ val.value }}">{{ val.label }}</option>
+                  {% endfor %}
+                </select>
+              {% endif %}
+            </div>
+          {% endfor %}
+          <div class="pkg-detail-actions" data-package="{{ package.id }}" data-package-type="{{ package.type }}">
+            {% if package.purchasable == false %}
+              <button class="btn btn-tertiary wide" disabled title="{{ package.reason }}">{{ package.reason }}</button>
+            {% else %}
+              <button type="submit" class="btn btn-primary wide add-to-basket {% if package.basket %}hidden{% endif %}" {% if package.basket %}hidden style="display:none"{% endif %}>
+                Add to Basket
+              </button>
+              <button type="button" class="btn btn-tertiary wide open-basket open-basket-cta {% if not package.basket %}hidden{% endif %}" {% if not package.basket %}hidden style="display:none"{% endif %}>
+                ✓ In Basket — Checkout
+              </button>
+            {% endif %}
+          </div>
+        </form>
+
+      {% else %}
+        {# Standard add to basket #}
+        <div class="pkg-detail-actions" data-package="{{ package.id }}" data-package-type="{{ package.type }}"
+          {% if package.purchasable == false %}title="{{ package.reason }}"{% endif %}>
+
+          {% if package.purchasable == false %}
+            <button class="btn btn-tertiary wide" disabled>{{ package.reason }}</button>
+          {% else %}
+            <a
+              href="/checkout/packages/add/{{ package.identifier ?? package.id }}"
+              class="btn btn-primary wide add-to-basket {% if package.basket %}hidden{% endif %}"
+              {% if package.basket %}hidden style="display:none"{% endif %}
+            >
+              {% if package.price == 0 %}Get for Free{% elseif package.type == 'subscription' %}Subscribe Now{% else %}Add to Basket{% endif %}
+            </a>
+            <button
+              class="btn btn-tertiary wide open-basket open-basket-cta {% if not package.basket %}hidden{% endif %}"
+              {% if not package.basket %}hidden style="display:none"{% endif %}
+            >
+              ✓ In Basket — View Checkout
+            </button>
+          {% endif %}
+
+          {% if not package.disableGifting and store.giftingEnabled %}
+            <a
+              href="/checkout/packages/add/{{ package.identifier ?? package.id }}/gift"
+              class="btn btn-secondary wide gift-btn"
+              style="margin-top: 0.6rem"
+            >
+              🎁 Gift This Package
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+
+<style>
+/* ── PACKAGE DETAIL ── */
+.pkg-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+@media (max-width: 768px) {
+  .pkg-detail { grid-template-columns: 1fr; }
+}
+
+.pkg-detail-media {}
+.pkg-detail-img {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+}
+.pkg-detail-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pkg-detail-img-placeholder {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--border2);
+}
+.pkg-detail-img-placeholder svg { width: 60px; height: 60px; }
+
+.pkg-media-gallery {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+.pkg-media-thumb {
+  width: 80px; height: 55px;
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.pkg-media-thumb:hover { border-color: var(--accent); }
+.pkg-media-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+.pkg-detail-cat {
+  font-size: 0.7rem;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-family: 'Share Tech Mono', monospace;
+  margin-bottom: 0.5rem;
+}
+.pkg-detail-name {
+  font-size: clamp(1.6rem, 3.5vw, 2.8rem);
+  letter-spacing: 1px;
+  margin-bottom: 1.25rem;
+  text-transform: uppercase;
+}
+
+.pkg-detail-price-block {
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.pkg-detail-original {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1rem;
+  color: var(--text2);
+  text-decoration: line-through;
+}
+.pkg-detail-price {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 2rem;
+  color: var(--accent);
+  line-height: 1;
+}
+.pkg-detail-price.discounted { color: var(--gold); }
+.pkg-detail-price.free { color: var(--green); }
+
+.pkg-detail-discount-tag {
+  background: rgba(255,68,102,0.12);
+  border: 1px solid rgba(255,68,102,0.3);
+  color: var(--accent2);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  padding: 0.2rem 0.65rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-family: 'Rajdhani', sans-serif;
+}
+.pkg-detail-sub-note {
+  width: 100%;
+  font-size: 0.78rem;
+  color: var(--gold);
+  letter-spacing: 1px;
+}
+
+.pkg-countdown {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255,68,102,0.07);
+  border: 1px solid rgba(255,68,102,0.2);
+  border-radius: 6px;
+  padding: 0.5rem 0.9rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.83rem;
+}
+.pkg-countdown-label { color: var(--accent2); font-weight: 600; }
+.countdown { font-family: 'Share Tech Mono', monospace; color: var(--text); }
+
+.pkg-detail-desc {
+  color: var(--text2);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  margin-bottom: 1.75rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 1.25rem 0;
+}
+.pkg-detail-desc p { margin-bottom: 0.75rem; }
+.pkg-detail-desc p:last-child { margin-bottom: 0; }
+.pkg-detail-desc ul, .pkg-detail-desc ol { padding-left: 1.25rem; margin-bottom: 0.75rem; }
+.pkg-detail-desc li { margin-bottom: 0.3rem; }
+
+.pkg-detail-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+.pkg-options-form .pkg-detail-actions { margin-top: 1rem; }
+.hidden { display: none !important; }
+</style>
+
+{% endblock %}

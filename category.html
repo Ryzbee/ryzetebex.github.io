@@ -1,0 +1,240 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="page-container">
+
+  {# ── CATEGORY HEADER ── #}
+  <div class="cat-header fade-up">
+    <div class="breadcrumb">
+      <a href="/">Home</a>
+      <span class="breadcrumb-sep">›</span>
+      <span>{{ category.name }}</span>
+    </div>
+    <div class="cat-header-inner">
+      <div>
+        <h1 class="cat-title">{{ category.name }}</h1>
+        {% if category.description %}
+          <p class="cat-desc">{{ category.description|raw }}</p>
+        {% endif %}
+      </div>
+      <div class="cat-meta">
+        <span class="tag tag-accent">{{ category.packages|length }} Package{{ category.packages|length != 1 ? 's' : '' }}</span>
+      </div>
+    </div>
+  </div>
+
+  {# ── LAYOUT: PACKAGES + SIDEBAR ── #}
+  <div class="layout-with-sidebar">
+    <div class="packages-main">
+      {% if category.packages|length > 0 %}
+        <div class="packages-grid">
+          {% for package in category.packages %}
+            <article class="pkg-card fade-up" style="animation-delay: {{ loop.index0 * 0.06 }}s">
+              <div class="pkg-glow"></div>
+
+              {# Image #}
+              <a href="/package/{{ package.identifier ?? package.id }}" class="pkg-img-wrap">
+                {% if package.image.url %}
+                  <img src="{{ package.image.url }}" alt="{{ package.name }}" loading="lazy">
+                {% else %}
+                  <div class="pkg-img-placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="4"/><path d="M8 12h8M12 8v8"/></svg>
+                  </div>
+                {% endif %}
+              </a>
+
+              {# Badge #}
+              {% if package.price == 0 %}
+                <span class="pkg-badge pkg-badge-free">Free</span>
+              {% elseif package.type == 'subscription' %}
+                <span class="pkg-badge pkg-badge-sub">Sub</span>
+              {% elseif package.discount.applied %}
+                <span class="pkg-badge pkg-badge-sale">-{{ package.discount.percentage }}%</span>
+              {% endif %}
+
+              <div class="pkg-body">
+                <div class="pkg-cat">{{ category.name }}</div>
+                <a href="/package/{{ package.identifier ?? package.id }}" class="pkg-name-link">
+                  <h3 class="pkg-name">{{ package.name }}</h3>
+                </a>
+                <div class="pkg-desc">{{ package.description|striptags|slice(0,120) }}{% if package.description|striptags|length > 120 %}…{% endif %}</div>
+
+                <div class="pkg-footer">
+                  <div class="pkg-price-wrap">
+                    {% if package.discount.applied %}
+                      <div class="pkg-price-original">{{ package.discount.original|money }}</div>
+                    {% endif %}
+                    <div class="pkg-price {% if package.discount.applied %}discounted{% elseif package.price == 0 %}free{% endif %}">
+                      {% if package.price == 0 %}
+                        FREE
+                      {% else %}
+                        {{ package.price|money }}
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <div class="pkg-actions" data-package="{{ package.id }}" data-package-type="{{ package.type }}">
+                    {% if package.purchasable == false %}
+                      <button class="btn btn-tertiary" disabled title="{{ package.reason }}">Unavailable</button>
+                    {% elseif package.requiresOptions %}
+                      <a href="/package/{{ package.identifier ?? package.id }}" class="btn btn-primary">Options</a>
+                    {% else %}
+                      <a
+                        href="/checkout/packages/add/{{ package.identifier ?? package.id }}"
+                        class="btn btn-primary add-to-basket {% if package.basket %}hidden{% endif %}"
+                        {% if package.basket %}hidden style="display:none"{% endif %}
+                      >
+                        Add
+                      </a>
+                      <button
+                        class="btn btn-tertiary open-basket open-basket-cta {% if not package.basket %}hidden{% endif %}"
+                        {% if not package.basket %}hidden style="display:none"{% endif %}
+                      >
+                        ✓ Added
+                      </button>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">📦</div>
+          <h3>No packages in this category yet</h3>
+          <p>Check back soon!</p>
+        </div>
+      {% endif %}
+    </div>
+
+    {# ── SIDEBAR ── #}
+    <aside class="sidebar">
+      {# Basket widget #}
+      <div class="sidebar-widget">
+        <h4>🛒 Your Basket</h4>
+        {% if basket.packages|length > 0 %}
+          <div class="basket-items">
+            {% for item in basket.packages %}
+              <div class="basket-item">
+                <span class="basket-item-name">{{ item.name }}</span>
+                <span class="basket-item-price">{{ item.price|money }}</span>
+              </div>
+            {% endfor %}
+          </div>
+          <div class="basket-total">
+            <span>Total</span>
+            <span class="basket-total-price">{{ basket.price|money }}</span>
+          </div>
+          <div style="margin-top:1rem">
+            <a href="/checkout" class="btn btn-primary wide">Checkout →</a>
+          </div>
+        {% else %}
+          <p style="color:var(--text2);font-size:0.85rem">Your basket is empty.</p>
+          <div style="margin-top:0.75rem">
+            <a href="/checkout" class="btn btn-tertiary wide">View Basket</a>
+          </div>
+        {% endif %}
+      </div>
+
+      {# Other categories #}
+      {% if store.categories|length > 1 %}
+        <div class="sidebar-widget">
+          <h4>Categories</h4>
+          <div class="sidebar-cats">
+            {% for cat in store.categories %}
+              <a href="/category/{{ cat.id }}" class="sidebar-cat {% if cat.id == category.id %}active{% endif %}">
+                {{ cat.name }}
+                <span class="sidebar-cat-count">{{ cat.packages|length }}</span>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      {# Sidebar modules #}
+      {% if modules %}
+        {% for module in modules %}
+          <div class="sidebar-widget">
+            {% include module.template %}
+          </div>
+        {% endfor %}
+      {% endif %}
+    </aside>
+  </div>
+
+</div>
+
+<style>
+/* ── BREADCRUMB ── */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text2);
+  margin-bottom: 1rem;
+}
+.breadcrumb a { color: var(--text2); }
+.breadcrumb a:hover { color: var(--accent); }
+.breadcrumb-sep { opacity: 0.4; }
+
+/* ── CATEGORY HEADER ── */
+.cat-header { margin-bottom: 2rem; }
+.cat-header-inner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.cat-title {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.cat-desc { color: var(--text2); font-size: 0.9rem; max-width: 600px; }
+.cat-meta { padding-top: 0.5rem; }
+
+/* ── EMPTY ── */
+.empty-state { text-align: center; padding: 4rem 1rem; color: var(--text2); }
+.empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+.empty-state h3 { font-size: 1.3rem; margin-bottom: 0.5rem; color: var(--text); }
+
+/* ── PKG NAME LINK ── */
+.pkg-name-link { text-decoration: none; }
+.pkg-name-link:hover .pkg-name { color: var(--accent); }
+.pkg-actions { display: flex; gap: 0.4rem; }
+.hidden { display: none !important; }
+
+/* ── SIDEBAR ── */
+.sidebar-cats { display: flex; flex-direction: column; gap: 0.25rem; }
+.sidebar-cat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: var(--text2);
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.sidebar-cat:hover, .sidebar-cat.active {
+  background: rgba(0,212,255,0.07);
+  color: var(--accent);
+}
+.sidebar-cat-count {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-size: 0.68rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  font-family: 'Share Tech Mono', monospace;
+}
+</style>
+
+{% endblock %}

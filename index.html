@@ -1,0 +1,215 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+{# ── HERO ─────────────────────────────────────────────── #}
+<section class="hero">
+  <div class="hero-bg-glow"></div>
+  <div class="hero-inner page-container">
+    <div class="hero-label">
+      <span class="hero-dot"></span>
+      SERVER STORE
+    </div>
+    <h1 class="hero-title">
+      {{ store.name }}<br>
+      <span class="hero-title-accent">STORE</span>
+    </h1>
+    <p class="hero-sub">Purchase exclusive packages, ranks, vehicles and more.<br>All deliveries are automatic and instant.</p>
+    <div class="hero-actions">
+      {% if store.categories|length > 0 %}
+        <a href="/category/{{ store.categories[0].id }}" class="btn btn-primary hero-cta">
+          Browse Packages
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      {% endif %}
+      <a href="/checkout" class="btn btn-tertiary">
+        View Basket
+        {% if basket.packages|length > 0 %}
+          <span class="hero-basket-count">{{ basket.packages|length }}</span>
+        {% endif %}
+      </a>
+    </div>
+
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-num">{{ store.categories|length }}</div>
+        <div class="hero-stat-label">Categories</div>
+      </div>
+      <div class="hero-stat-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">24/7</div>
+        <div class="hero-stat-label">Auto-Delivery</div>
+      </div>
+      <div class="hero-stat-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-num mono text-green">●&nbsp;Online</div>
+        <div class="hero-stat-label">Server Status</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ── ALL CATEGORIES ────────────────────────────────────── #}
+<div class="page-container">
+  {% for category in store.categories %}
+    {% if category.packages|length > 0 %}
+      <div class="category-block fade-up" style="animation-delay: {{ loop.index0 * 0.08 }}s">
+        <div class="section-header">
+          <h2>{{ category.name }}</h2>
+          <div class="section-line"></div>
+          <a href="/category/{{ category.id }}" class="section-all-link">
+            View All →
+          </a>
+        </div>
+        {% if category.description %}
+          <p class="category-desc">{{ category.description|raw }}</p>
+        {% endif %}
+
+        <div class="packages-grid">
+          {% for package in category.packages|slice(0, 4) %}
+            {% include "partials/package-card.html" with {'package': package, 'category': category} %}
+          {% endfor %}
+        </div>
+
+        {% if category.packages|length > 4 %}
+          <div class="category-more">
+            <a href="/category/{{ category.id }}" class="btn btn-secondary">
+              View All {{ category.packages|length }} Packages →
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🛒</div>
+      <h3>No packages available yet</h3>
+      <p>Check back soon — packages are being set up!</p>
+    </div>
+  {% endfor %}
+</div>
+
+<style>
+/* ── HERO ── */
+.hero {
+  position: relative;
+  padding: 5rem 0 4rem;
+  overflow: hidden;
+}
+.hero-bg-glow {
+  position: absolute;
+  top: -150px; left: 50%;
+  transform: translateX(-50%);
+  width: 800px; height: 500px;
+  background: radial-gradient(ellipse, rgba(0,212,255,0.08) 0%, transparent 65%);
+  pointer-events: none;
+}
+.hero-inner { position: relative; }
+.hero-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0,212,255,0.08);
+  border: 1px solid rgba(0,212,255,0.2);
+  color: var(--accent);
+  font-size: 0.68rem;
+  letter-spacing: 3px;
+  padding: 0.3rem 0.9rem;
+  border-radius: 20px;
+  margin-bottom: 1.25rem;
+  font-family: 'Share Tech Mono', monospace;
+  text-transform: uppercase;
+}
+.hero-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.hero-title {
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  line-height: 1.05;
+  margin-bottom: 1.1rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+.hero-title-accent {
+  color: var(--accent);
+  text-shadow: 0 0 40px rgba(0,212,255,0.3);
+}
+.hero-sub {
+  color: var(--text2);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 2rem;
+  max-width: 520px;
+  font-weight: 300;
+}
+.hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 2.5rem; }
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  font-size: 1rem;
+}
+.hero-basket-count {
+  background: #000;
+  color: var(--accent);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+.hero-stats {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.hero-stat-num {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.6rem;
+  color: var(--accent);
+}
+.hero-stat-label {
+  font-size: 0.68rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-top: 2px;
+}
+.hero-stat-divider { width: 1px; height: 36px; background: var(--border2); }
+
+/* ── CATEGORY BLOCK ── */
+.category-block { margin-bottom: 3.5rem; }
+.section-all-link {
+  color: var(--text2);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+.section-all-link:hover { color: var(--accent); }
+.category-desc {
+  color: var(--text2);
+  font-size: 0.88rem;
+  margin-bottom: 1.25rem;
+  line-height: 1.6;
+}
+.category-more { text-align: center; margin-top: 1.5rem; }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 5rem 1rem;
+  color: var(--text2);
+}
+.empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+.empty-state h3 { font-size: 1.4rem; margin-bottom: 0.5rem; color: var(--text); }
+</style>
+
+{% endblock %}

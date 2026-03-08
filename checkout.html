@@ -1,0 +1,285 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="page-container">
+  <div class="section-header fade-up">
+    <h1>Your Basket</h1>
+    <div class="section-line"></div>
+  </div>
+
+  {% if basket.packages|length > 0 %}
+    <div class="checkout-layout fade-up">
+
+      {# ── BASKET ITEMS ── #}
+      <div class="checkout-main">
+        <div class="checkout-items">
+          {% for item in basket.packages %}
+            <div class="checkout-item">
+              {% if item.image %}
+                <div class="checkout-item-img">
+                  <img src="{{ item.image }}" alt="{{ item.name }}">
+                </div>
+              {% endif %}
+              <div class="checkout-item-info">
+                <div class="checkout-item-name">{{ item.name }}</div>
+                {% if item.in_basket.gift_username %}
+                  <div class="checkout-item-gift">🎁 Gift for {{ item.in_basket.gift_username }}</div>
+                {% endif %}
+              </div>
+              <div class="checkout-item-qty mono">×{{ item.in_basket.quantity }}</div>
+              <div class="checkout-item-price mono">{{ item.in_basket.price|money }}</div>
+              <a href="/checkout/packages/remove/{{ item.id }}" class="checkout-item-remove" title="Remove">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+
+        {# Discount codes #}
+        <div class="checkout-codes">
+          <div class="codes-grid">
+            <div class="code-block">
+              <h4>Coupon Code</h4>
+              <form method="post" action="/checkout/coupons/apply" class="code-form">
+                <input type="text" name="coupon_code" class="form-control" placeholder="Enter coupon…">
+                <button type="submit" class="btn btn-secondary">Apply</button>
+              </form>
+              {% if basket.coupons|length > 0 %}
+                <div class="applied-codes">
+                  {% for coupon in basket.coupons %}
+                    <div class="applied-code">
+                      <span>{{ coupon.code }}</span>
+                      <a href="/checkout/coupons/remove/{{ coupon.code }}" class="remove-code">✕</a>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="code-block">
+              <h4>Gift Card</h4>
+              <form method="post" action="/checkout/giftcards/apply" class="code-form">
+                <input type="text" name="gift_card_number" class="form-control" placeholder="Gift card number…">
+                <button type="submit" class="btn btn-secondary">Apply</button>
+              </form>
+              {% if basket.giftcards|length > 0 %}
+                <div class="applied-codes">
+                  {% for card in basket.giftcards %}
+                    <div class="applied-code">
+                      <span>•••• {{ card.card_number|slice(-4) }}</span>
+                      <a href="/checkout/giftcards/remove/{{ card.card_number }}" class="remove-code">✕</a>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# ── ORDER SUMMARY ── #}
+      <div class="checkout-summary">
+        <div class="summary-box">
+          <h3 class="summary-title">Order Summary</h3>
+
+          <div class="summary-lines">
+            <div class="summary-line">
+              <span>Subtotal</span>
+              <span class="mono">{{ basket.base_price|money }} {{ basket.currency }}</span>
+            </div>
+            {% if basket.sales_tax > 0 %}
+              <div class="summary-line">
+                <span>Tax</span>
+                <span class="mono">{{ basket.sales_tax|money }}</span>
+              </div>
+            {% endif %}
+            {% if basket.coupons|length > 0 %}
+              <div class="summary-line text-green">
+                <span>Discount</span>
+                <span class="mono">Applied ✓</span>
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="summary-total">
+            <span>Total</span>
+            <span class="summary-total-price mono">{{ basket.total_price|money }} {{ basket.currency }}</span>
+          </div>
+
+          <a href="/checkout/proceed" class="btn btn-primary wide checkout-proceed">
+            Proceed to Checkout →
+          </a>
+          <a href="/" class="btn btn-tertiary wide" style="margin-top:0.5rem">
+            Continue Shopping
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+  {% else %}
+    {# ── EMPTY BASKET ── #}
+    <div class="checkout-empty fade-up">
+      <div class="checkout-empty-icon">🛒</div>
+      <h2>Your basket is empty</h2>
+      <p>Add some packages to get started!</p>
+      <a href="/" class="btn btn-primary" style="margin-top:1.5rem">Browse Packages →</a>
+    </div>
+  {% endif %}
+
+</div>
+
+<style>
+.checkout-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 2rem;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .checkout-layout { grid-template-columns: 1fr; }
+}
+
+/* Items */
+.checkout-items {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+.checkout-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s;
+}
+.checkout-item:last-child { border-bottom: none; }
+.checkout-item:hover { background: var(--surface2); }
+
+.checkout-item-img {
+  width: 56px; height: 40px;
+  border-radius: 5px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--bg2);
+}
+.checkout-item-img img { width: 100%; height: 100%; object-fit: cover; }
+
+.checkout-item-info { flex: 1; min-width: 0; }
+.checkout-item-name { font-weight: 600; font-size: 0.9rem; color: var(--white); }
+.checkout-item-gift { font-size: 0.75rem; color: var(--gold); margin-top: 2px; }
+
+.checkout-item-qty { color: var(--text2); font-size: 0.85rem; }
+.checkout-item-price { color: var(--accent); font-size: 0.95rem; min-width: 70px; text-align: right; }
+
+.checkout-item-remove {
+  color: var(--text2);
+  display: flex; align-items: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+.checkout-item-remove:hover { color: var(--accent2); background: rgba(255,68,102,0.1); }
+
+/* Codes */
+.checkout-codes {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+.codes-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+@media (max-width: 600px) { .codes-grid { grid-template-columns: 1fr; } }
+.code-block h4 {
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 0.75rem;
+}
+.code-form {
+  display: flex;
+  gap: 0.5rem;
+}
+.code-form .form-control { flex: 1; }
+
+.applied-codes { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.applied-code {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0,230,118,0.06);
+  border: 1px solid rgba(0,230,118,0.2);
+  border-radius: 5px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  color: var(--green);
+  font-family: 'Share Tech Mono', monospace;
+}
+.remove-code { color: var(--text2); cursor: pointer; text-decoration: none; }
+.remove-code:hover { color: var(--accent2); }
+
+/* Summary */
+.summary-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  position: sticky;
+  top: 80px;
+}
+.summary-title {
+  font-size: 1rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+.summary-lines { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1rem; }
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  color: var(--text2);
+}
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+  margin-bottom: 1.25rem;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--white);
+}
+.summary-total-price { font-size: 1.5rem; color: var(--accent); }
+
+.checkout-proceed { font-size: 1rem; padding: 0.85rem; }
+
+/* Empty */
+.checkout-empty {
+  text-align: center;
+  padding: 5rem 1rem;
+  color: var(--text2);
+}
+.checkout-empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+.checkout-empty h2 { font-size: 1.8rem; margin-bottom: 0.5rem; color: var(--white); }
+</style>
+
+{% endblock %}

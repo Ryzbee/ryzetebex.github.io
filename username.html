@@ -1,0 +1,63 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="page-container">
+  <div class="username-wrap fade-up">
+    <div class="username-card">
+      <div class="username-icon">🎮</div>
+      <h1>{{ __("Enter Your Username") }}</h1>
+      <p>{{ __("Please enter your in-game username to receive your purchase.") }}</p>
+
+      <form method="post" action="/checkout/username" class="username-form">
+        <div class="form-group">
+          <label class="form-label" for="username">{{ __("In-Game Username / Steam ID") }}</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            class="form-control"
+            placeholder="{{ __("e.g. YourName or steam:110000...") }}"
+            autofocus
+            required
+          >
+          <div class="form-hint">This must match your exact username on the server.</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary wide">
+          {{ __("Continue to Payment") }} →
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+.username-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 2rem 0;
+}
+.username-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 460px;
+  text-align: center;
+}
+.username-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+.username-card h1 {
+  font-size: 1.8rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.username-card p { color: var(--text2); margin-bottom: 2rem; font-size: 0.9rem; }
+.username-form { text-align: left; }
+.form-hint { font-size: 0.75rem; color: var(--text2); margin-top: 0.4rem; }
+</style>
+
+{% endblock %}

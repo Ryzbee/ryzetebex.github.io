@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="page-container">
+  <div class="quote-wrap fade-up">
+    <div class="quote-card" data-popup>
+      <div class="quote-icon">🔄</div>
+      <h1>{{ __("Update Tier") }}</h1>
+      <div class="quote-desc text-content">
+        {{ description|raw }}
+      </div>
+
+      <form method="post" action="/tier/update" class="quote-form">
+        <input type="hidden" name="category_id" value="{{ category }}">
+        <input type="hidden" name="package_id" value="{{ package }}">
+        {% for k, v in options %}
+          <input type="hidden" name="options[{{ k }}]" value="{{ v }}">
+        {% endfor %}
+
+        <div class="quote-actions">
+          <a href="/category/{{ category }}" class="btn btn-tertiary">← {{ __("Back") }}</a>
+          <button type="submit" class="btn btn-primary confirm">{{ __("Confirm Change") }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+.quote-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 0 5rem;
+}
+.quote-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+}
+.quote-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+.quote-card h1 { font-size: 1.8rem; text-transform: uppercase; margin-bottom: 0.75rem; }
+.quote-desc { color: var(--text2); font-size: 0.9rem; line-height: 1.7; margin-bottom: 2rem; }
+.quote-form {}
+.quote-actions { display: flex; gap: 0.75rem; justify-content: center; }
+</style>
+
+{% endblock %}
