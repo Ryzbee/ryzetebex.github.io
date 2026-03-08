@@ -1,0 +1,183 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="page-container">
+
+  <div class="cat-header fade-up">
+    <div class="breadcrumb">
+      <a href="/">Home</a>
+      <span class="breadcrumb-sep">›</span>
+      <span>{{ category.name }}</span>
+    </div>
+    <div class="cat-header-inner">
+      <div>
+        <h1 class="cat-title">{{ category.name }}</h1>
+        {% if category.description %}
+          <p class="cat-desc">{{ category.description|raw }}</p>
+        {% endif %}
+      </div>
+      <span class="tag tag-gold">Subscription Tiers</span>
+    </div>
+  </div>
+
+  <div class="tiers-grid fade-up">
+    {% for package in category.packages %}
+      <div class="tier-card {% if tier and tier.package_id == package.id %}tier-card--active{% endif %}">
+        <div class="tier-glow"></div>
+        {% if tier and tier.package_id == package.id %}
+          <div class="tier-active-badge">✓ Current Plan</div>
+        {% endif %}
+
+        {% if package.image.url %}
+          <div class="tier-img">
+            <img src="{{ package.image.url }}" alt="{{ package.name }}">
+          </div>
+        {% endif %}
+
+        <div class="tier-body">
+          <div class="tier-name">{{ package.name }}</div>
+          {% if package.countdownEnds %}
+            <div class="pkg-countdown">
+              <span class="pkg-countdown-label">Limited!</span>
+              <span class="countdown" data-countdown="{{ package.countdownEnds }}">Ending soon</span>
+            </div>
+          {% endif %}
+
+          <div class="tier-desc">{{ package.description|raw }}</div>
+
+          <div class="tier-price">
+            {% if package.customPrice %}
+              <span>{{ __("You decide how much to pay.") }}</span>
+            {% elseif package.price == 0.00 %}
+              <span class="text-green">FREE</span>
+            {% else %}
+              {% if package.discount.applied %}
+                <del class="tier-price-original">{{ package.discount.original|money }}</del>
+              {% endif %}
+              <strong class="tier-price-main">{{ package.price|money }}</strong>
+              <span class="tier-currency">{{ basket.currency }}/mo</span>
+            {% endif %}
+          </div>
+
+          {% set packageIdentifier = package.identifier ? package.identifier : package.id %}
+
+          <div class="tier-actions" data-package="{{ package.id }}" data-package-type="{{ package.type }}"
+            {% if package.purchasable == false %}title="{{ package.reason }}"{% endif %}>
+
+            {% if tier and tier.package_id == package.id %}
+              <button class="btn btn-tertiary wide" disabled>{{ __("Subscribed") }}</button>
+            {% elseif tier and tier.downgrade_package_id == package.id %}
+              <button class="btn btn-tertiary wide" disabled>{{ __("Pending Downgrade") }}</button>
+            {% elseif tier %}
+              <a href="/tier/quote?category={{ category.id }}&package={{ package.id }}"
+                 class="btn btn-secondary wide"
+                 {% if package.purchasable == false %}style="pointer-events:none;opacity:0.5"{% endif %}>
+                {{ __("Switch Plan") }}
+              </a>
+            {% else %}
+              <a href="/checkout/packages/add/{{ packageIdentifier }}/subscribe"
+                 class="btn btn-primary wide {% if package.basket %}hidden{% endif %}"
+                 {% if package.basket %}hidden style="display:none"{% endif %}
+                 {% if package.purchasable == false %}style="pointer-events:none;opacity:0.5"{% endif %}>
+                {{ __("Subscribe") }}
+              </a>
+              <button class="btn btn-tertiary wide open-basket open-basket-cta {% if not package.basket %}hidden{% endif %}"
+                {% if not package.basket %}hidden style="display:none"{% endif %}>
+                {{ __("Added to Basket") }}
+              </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📦</div>
+        <h3>No tiers available</h3>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<style>
+.tiers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+.tier-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+.tier-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+}
+.tier-card--active {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(240,192,64,0.2), 0 8px 30px rgba(240,192,64,0.1);
+}
+.tier-glow {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.tier-card--active .tier-glow, .tier-card:hover .tier-glow { opacity: 0.6; }
+.tier-active-badge {
+  position: absolute;
+  top: 10px; right: 10px;
+  background: var(--gold);
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-family: 'Rajdhani', sans-serif;
+}
+.tier-img { width: 100%; aspect-ratio: 16/9; overflow: hidden; }
+.tier-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tier-body { padding: 1.25rem; flex: 1; display: flex; flex-direction: column; gap: 0.75rem; }
+.tier-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--white);
+}
+.tier-desc { font-size: 0.82rem; color: var(--text2); line-height: 1.55; flex: 1; }
+.tier-desc ul { padding-left: 1.1rem; }
+.tier-desc li { margin-bottom: 0.25rem; }
+.tier-price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.tier-price-original {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--text2);
+}
+.tier-price-main {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.8rem;
+  color: var(--accent);
+}
+.tier-currency { font-size: 0.8rem; color: var(--text2); letter-spacing: 1px; }
+.tier-actions { margin-top: auto; }
+.hidden { display: none !important; }
+</style>
+
+{% endblock %}

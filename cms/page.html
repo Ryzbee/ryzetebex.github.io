@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="page-container">
+  <div class="cms-page fade-up">
+    <div class="breadcrumb">
+      <a href="/">Home</a>
+      <span class="breadcrumb-sep">›</span>
+      <span>{{ page.title }}</span>
+    </div>
+    <h1 class="cms-title">{{ page.title }}</h1>
+    <div class="cms-body">
+      {{ page.content|raw }}
+    </div>
+  </div>
+</div>
+
+<style>
+.cms-page { max-width: 820px; }
+.cms-title {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 1rem 0 2rem;
+}
+.cms-body {
+  color: var(--text2);
+  font-size: 0.95rem;
+  line-height: 1.8;
+}
+.cms-body h1, .cms-body h2, .cms-body h3 { color: var(--white); margin: 1.5rem 0 0.75rem; }
+.cms-body p { margin-bottom: 1rem; }
+.cms-body a { color: var(--accent); }
+.cms-body ul, .cms-body ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+.cms-body li { margin-bottom: 0.4rem; }
+.cms-body blockquote {
+  border-left: 3px solid var(--accent);
+  padding: 0.75rem 1.25rem;
+  margin: 1.5rem 0;
+  background: rgba(0,212,255,0.04);
+  border-radius: 0 6px 6px 0;
+  color: var(--text);
+}
+.cms-body img { max-width: 100%; border-radius: var(--radius); margin: 1rem 0; }
+.cms-body table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.cms-body th, .cms-body td {
+  border: 1px solid var(--border);
+  padding: 0.6rem 1rem;
+  text-align: left;
+  font-size: 0.88rem;
+}
+.cms-body th { background: var(--surface2); color: var(--white); }
+</style>
+
+{% endblock %}
